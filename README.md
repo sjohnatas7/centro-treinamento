@@ -1,4 +1,4 @@
-# centro-treinamento
+# Centro Treinamento
 
 ## Descrição do problema 
 
