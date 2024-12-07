@@ -1,62 +1,57 @@
 -- 1. Find players that have participated in all championships of their sport in 2023
 \echo 1. Find players that have participated in all championships of their sport in 2023
-SELECT a.nome, ac.esporte_nome
-FROM (
-    SELECT a.cpf, t.esporte_nome, COUNT(DISTINCT c.id) AS championships_participated
-    FROM atleta a
-    JOIN atleta_time at ON a.cpf = at.atleta_cpf
-    JOIN time t ON at.time_id = t.id
-    JOIN times_participantes tp ON t.id = tp.time_id
-    JOIN campeonato c ON tp.campeonato_id = c.id
-    WHERE c.ano = 2023 AND c.esporte_nome = t.esporte_nome
-    GROUP BY a.cpf, t.esporte_nome
-) ac
-JOIN (
-    SELECT esporte_nome, COUNT(*) AS total_championships
-    FROM campeonato
-    WHERE ano = 2023
-    GROUP BY esporte_nome
-) tc ON ac.esporte_nome = tc.esporte_nome
-JOIN atleta a ON ac.cpf = a.cpf
-WHERE ac.championships_participated = tc.total_championships;
+SELECT 
+    a.nome,
+    t.esporte_nome
+FROM 
+    atleta a
+JOIN 
+    atleta_time at ON a.cpf = at.atleta_cpf
+JOIN 
+    time t ON at.time_id = t.id
+JOIN 
+    times_participantes tp ON t.id = tp.time_id
+JOIN 
+    campeonato c ON tp.campeonato_id = c.id AND c.ano = 2023 AND c.esporte_nome = t.esporte_nome
+GROUP BY 
+    a.cpf, a.nome, t.esporte_nome
+HAVING 
+    COUNT(DISTINCT c.id) = (
+        SELECT COUNT(*)
+        FROM campeonato c2
+        WHERE c2.ano = 2023
+        AND c2.esporte_nome = t.esporte_nome
+    );
 
 
 -- 2. Find teams that have participated in all championships of their sport
 \echo 2. Find teams that have participated in all championships of their sport
-SELECT 
+SELECT
     t.nome AS team_name,
     t.esporte_nome AS sport_name
-FROM 
+FROM
     time t
-WHERE 
-    NOT EXISTS (
-        SELECT 
-            c.id
-        FROM 
-            campeonato c
-        WHERE 
-            c.esporte_nome = t.esporte_nome
-        AND 
-            NOT EXISTS (
-                SELECT 
-                    1
-                FROM 
-                    times_participantes tp
-                WHERE 
-                    tp.campeonato_id = c.id
-                AND 
-                    tp.time_id = t.id
-            )
+JOIN
+    times_participantes tp ON t.id = tp.time_id
+JOIN
+    campeonato c ON tp.campeonato_id = c.id AND c.esporte_nome = t.esporte_nome
+GROUP BY
+    t.id, t.nome, t.esporte_nome
+HAVING
+    COUNT(DISTINCT c.id) = (
+        SELECT COUNT(DISTINCT c2.id)
+        FROM campeonato c2
+        WHERE c2.esporte_nome = t.esporte_nome
     )
-ORDER BY 
+ORDER BY
     t.esporte_nome, t.nome;
 
 -- 3. Find teams with highest average performance in matches, including only teams that participated in at least 3 matches
 \echo 3. Find teams with highest average performance in matches, including only teams that participated in at least 3 matches
 SELECT 
     tp.nome,
-    tp.avg_performance,
-    tp.num_matches
+    tp.avg_performance as media_desempenho,
+    tp.num_matches as num_partidas
 FROM (
     SELECT 
         t.id,
@@ -86,9 +81,9 @@ WHERE tp.avg_performance = (
 -- 4. Find the average performance of teams in championships
 \echo 4. Find the average performance of teams in championships
 SELECT 
-    t.nome AS team_name,
-    c.nome AS championship_name,
-    AVG(pt.desempenho) AS average_performance
+    t.nome AS nome_time,
+    c.nome AS nome_campeonato,
+    AVG(pt.desempenho) AS media_desempenho
 FROM 
     time t
 JOIN 
@@ -106,8 +101,8 @@ ORDER BY
 -- 5. Find the number of matches each referee has officiated in each sport
 \echo 5. Find the number of matches each referee has officiated in each sport
 SELECT 
-    a.nome AS referee_name,
-    e.nome AS sport_name,
+    a.nome as nome_arbitro,
+    e.nome as nome_esporte,
     COUNT(p.id) AS number_of_matches
 FROM 
     arbitro a
