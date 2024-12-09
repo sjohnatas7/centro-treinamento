@@ -1,5 +1,5 @@
--- 1. Find players that have participated in all championships of their sport in 2023
-\echo 1. Find players that have participated in all championships of their sport in 2023
+-- 1. Encontre jogadores que participaram de todos os campeonatos de seu esporte em 2023
+\echo 1. Encontre jogadores que participaram de todos os campeonatos de seu esporte em 2023
 SELECT 
     a.nome,
     t.esporte_nome
@@ -24,8 +24,8 @@ HAVING
     );
 
 
--- 2. Find teams that have participated in all championships of their sport
-\echo 2. Find teams that have participated in all championships of their sport
+-- 2. Encontre times que participaram de todos os campeonatos de seu esporte
+\echo 2. Encontre times que participaram de todos os campeonatos de seu esporte
 SELECT
     t.nome AS team_name,
     t.esporte_nome AS sport_name
@@ -46,8 +46,8 @@ HAVING
 ORDER BY
     t.esporte_nome, t.nome;
 
--- 3. Find teams with highest average performance in matches, including only teams that participated in at least 3 matches
-\echo 3. Find teams with highest average performance in matches, including only teams that participated in at least 3 matches
+-- 3. Encontre times com maior desempenho médio em partidas, incluindo apenas times que participaram de pelo menos 3 partidas
+\echo 3. Encontre times com maior desempenho médio em partidas, incluindo apenas times que participaram de pelo menos 3 partidas
 SELECT 
     tp.nome,
     tp.avg_performance as media_desempenho,
@@ -78,8 +78,8 @@ WHERE tp.avg_performance = (
     ) sub
 );
 
--- 4. Find the average performance of teams in championships
-\echo 4. Find the average performance of teams in championships
+-- 4. Encontre o desempenho médio dos times em campeonatos
+\echo 4. Encontre o desempenho médio dos times em campeonatos
 SELECT 
     t.nome AS nome_time,
     c.nome AS nome_campeonato,
@@ -98,8 +98,8 @@ ORDER BY
     t.nome, c.nome;
 
 
--- 5. Find the number of matches each referee has officiated in each sport
-\echo 5. Find the number of matches each referee has officiated in each sport
+-- 5. Encontre o número de partidas que cada árbitro apitou em cada esporte
+\echo 5. Encontre o número de partidas que cada árbitro apitou em cada esporte
 SELECT 
     a.nome as nome_arbitro,
     e.nome as nome_esporte,
@@ -116,3 +116,33 @@ GROUP BY
     a.nome, e.nome
 ORDER BY 
     a.nome, e.nome;
+
+-- 6. Times que Participaram de Todos os Campeonatos do Seu Esporte
+\echo 6. Times que Participaram de Todos os Campeonatos do Seu Esporte
+SELECT
+    t.nome AS team_name,
+    t.esporte_nome AS sport_name
+FROM 
+    time t
+WHERE 
+    NOT EXISTS (
+        SELECT 
+            c.id
+        FROM 
+            campeonato c
+        WHERE 
+            c.esporte_nome = t.esporte_nome
+        AND 
+            NOT EXISTS (
+                SELECT 
+                    1
+                FROM 
+                    times_participantes tp
+                WHERE 
+                    tp.campeonato_id = c.id
+                AND 
+                    tp.time_id = t.id
+            )
+    )
+ORDER BY 
+    t.esporte_nome, t.nome;

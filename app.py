@@ -4,6 +4,7 @@ from os import environ
 import psycopg as psy
 from rich.console import Console
 from rich.table import Table
+from datetime import datetime
 
 app = typer.Typer(help="Aplicação REPL para interação com o banco de dados.")
 
@@ -40,10 +41,10 @@ def inserir_time_cmd(conexao: str = typer.Option(get_default_conexao, help="Stri
         nome = input("Nome do time: ")
         esporte_nome = input("Nome do esporte: ")
         
-        cur.execute("SELECT 1 FROM ESPORTE WHERE NOME = %s", (esporte_nome.upper(),))
-        if cur.fetchone() is None:
-            typer.echo(f"Esporte '{esporte_nome}' não encontrado. Verifique o nome do esporte e tente novamente.")
-            return
+        # cur.execute("SELECT 1 FROM ESPORTE WHERE NOME = %s", (esporte_nome.upper(),))
+        # if cur.fetchone() is None:
+            # typer.echo(f"Esporte '{esporte_nome}' não encontrado. Verifique o nome do esporte e tente novamente.")
+            # return
         
         desempenho = float(input("Desempenho do time: "))
         
@@ -56,7 +57,8 @@ def inserir_time_cmd(conexao: str = typer.Option(get_default_conexao, help="Stri
         
         if not administrador_existe(cur, administrador_cpf):
             administrador_nome = input("Nome do administrador: ")
-            administrador_data_nascimento = input("Data de nascimento do administrador (YYYY-MM-DD): ")
+            administrador_data_nascimento = input("Data de nascimento do administrador (DD/MM/YYYY): ")
+            administrador_data_nascimento = datetime.strptime(administrador_data_nascimento, "%d/%m/%Y").strftime("%Y-%m-%d")
             criar_administrador(cur, administrador_cpf, administrador_nome, administrador_data_nascimento)
         
         inserir_time(cur, nome, esporte_nome, desempenho, administrador_cpf)
@@ -156,7 +158,7 @@ def times_participantes_todos_campeonatos(conexao: str = typer.Option(default_co
     except Exception as e:
         typer.echo(f"Error executing query: {e}")
 
-@app.command("desempenho-times", help="Encontrar os times com o maior desempenho médio (mínimo 3 partidas).")
+@app.command("max-desempenho-times", help="Encontrar os times com o maior desempenho médio (mínimo 3 partidas).")
 def desempenho_times(conexao: str = typer.Option(default_conexao, help="String de conexão do banco de dados.")):
     """Encontrar os times com o maior desempenho médio (mínimo 3 partidas)."""
     try:
@@ -196,7 +198,7 @@ def desempenho_times(conexao: str = typer.Option(default_conexao, help="String d
         results = cur.fetchall()
         conn.close()
         
-        table = Table(title="Teams with Highest Average Performance (Min 3 Matches)")
+        table = Table(title="Times com Maior Desempenho Médio (Mínimo 3 Partidas)")
         table.add_column("Nome Time", style="cyan")
         table.add_column("Desempenho Médio", style="green")
         table.add_column("Numero de Partidas", style="magenta")
